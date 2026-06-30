@@ -1,0 +1,64 @@
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+
+class OrderDetailBase(BaseModel):
+    sku_id: int
+    quantity: int
+    unit_price: float
+    discount_type_snapshot: str = "none"
+    discount_value_snapshot: float = 0.0
+
+class OrderDetailCreate(OrderDetailBase):
+    sku_code_snapshot: str
+    product_name_snapshot: str
+    color_name_snapshot: str
+    size_snapshot: str
+    image_url_snapshot: Optional[str] = None
+    discounted_price: float
+    line_total: float
+
+class OrderDetailResponse(OrderDetailCreate):
+    order_detail_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class OrderBase(BaseModel):
+    customer_id: Optional[int] = None
+    receiver_name: str
+    receiver_phone: str
+    shipping_address: str
+    note: Optional[str] = None
+    payment_method: str
+    voucher_id: Optional[int] = None
+
+class OrderCreate(OrderBase):
+    voucher_code: Optional[str] = None
+
+class OrderStatusUpdate(BaseModel):
+    status: str
+    note: Optional[str] = None
+
+class OrderCancel(BaseModel):
+    reason: str
+
+class OrderResponse(OrderBase):
+    order_id: int
+    order_code: str
+    payment_status: str
+    voucher_code_snapshot: Optional[str] = None
+    subtotal_amount: float
+    voucher_discount_amount: float
+    shipping_fee: float
+    total_amount: float
+    order_status: str
+    cancelled_reason: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    details: List[OrderDetailResponse] = []
+
+    class Config:
+        from_attributes = True

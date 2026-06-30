@@ -1,0 +1,47 @@
+from enum import Enum
+
+
+class PaymentMethod(str, Enum):
+    cod = "cod"
+    bank_transfer = "bank_transfer"
+    online = "online"
+
+
+class OrderStatus(str, Enum):
+    pending = "pending"
+    confirmed = "confirmed"
+    preparing = "preparing"
+    shipping = "shipping"
+    completed = "completed"
+    cancelled = "cancelled"
+
+
+class PaymentStatus(str, Enum):
+    pending = "pending"
+    paid = "paid"
+    refunded = "refunded"
+
+
+class GenderTarget(str, Enum):
+    men = "men"
+    women = "women"
+    unisex = "unisex"
+    kids = "kids"
+
+
+class Status(str, Enum):
+    active = "active"
+    hidden = "hidden"
+    discontinued = "discontinued"
+    out_of_stock = "out_of_stock"
+
+
+class DiscountType(str, Enum):
+    none = "none"
+    percent = "percent"
+    fixed = "fixed"
+
+
+class BaseStatus(str, Enum):
+    active = "active"
+    inactive = "inactive"
