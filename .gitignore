@@ -24,6 +24,7 @@ docs.zip
 archive.zip
 *.pyc
 .env
+*/uploads/*
 # vim temporary files
 *~
 .*.sw?
