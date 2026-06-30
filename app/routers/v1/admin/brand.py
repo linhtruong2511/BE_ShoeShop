@@ -1,3 +1,7 @@
+import os
+import shutil
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -8,6 +12,7 @@ from app.models.user import User
 from app.schemas.base import BaseResponse
 
 router = APIRouter(prefix="/brands", tags=["Admin - Brands"])
+UPLOAD_DIR = "static/uploads/brands"
 
 
 def generate_code(brand_name):
@@ -27,7 +32,38 @@ async def create_brand(
     if existing:
         raise HTTPException(status_code=400, detail="Brand code already exists")
     setattr(brand_in, "brand_code", brand_code)
-    brand = await repo.create_with_file(brand_in.model_dump(), file=brand_in.file)
+    brand = await repo.create(brand_in.model_dump())
+    await db.commit()
+    await db.refresh(brand)
+    return BaseResponse(data=brand)
+
+
+@router.patch("/{brand_id}/upload-logo", response_model=BaseResponse[BrandResponse])
+async def update_brand_logo(
+    brand_id: int,
+    logo_file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    repo = BrandRepository(db)
+    brand = await repo.get_by_id(brand_id)
+
+    if not brand:
+        raise HTTPException(404, "Brand not found")
+
+    if logo_file.content_type and not logo_file.content_type.startswith("image/"):
+        raise HTTPException(400, "File must be an image")
+
+    file_extention = logo_file.filename.split(".")[-1] if logo_file.filename else "jpg"
+    file_name = f"{uuid4()}.{file_extention}"
+    file_path = os.path.join(UPLOAD_DIR, file_name)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(logo_file.file, buffer)
+
+    brand.logo_url = file_path
+    await db.commit()
+    await db.refresh(brand)
     return BaseResponse(data=brand)
 
 

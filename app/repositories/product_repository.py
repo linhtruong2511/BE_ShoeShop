@@ -115,8 +115,8 @@ class ProductRepository(BaseRepository[Product]):
                     base_stmt = base_stmt.where(ProductSku.stock_quantity > 0)
             if min_price:
                 base_stmt = base_stmt.where(
-                    ProductColor.price >= min_price
-                )  # simplified for now
+                    ProductColor.price >= min_price,
+                )
             if max_price:
                 base_stmt = base_stmt.where(ProductColor.price <= max_price)
             if on_sale:
@@ -135,11 +135,6 @@ class ProductRepository(BaseRepository[Product]):
             selectinload(Product.colors).selectinload(ProductColor.images),
             selectinload(Product.brand),
             selectinload(Product.category),
-            with_loader_criteria(
-                ProductColor,
-                ProductColor.status == ProductColorStatus.active,
-                include_aliases=True,
-            ),
         )
 
         if sort_order == "desc":

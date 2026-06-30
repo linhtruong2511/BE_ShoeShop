@@ -2,12 +2,16 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
+from app.core.enums import OrderStatus, ShippingMethod
+
+
 class OrderDetailBase(BaseModel):
     sku_id: int
     quantity: int
     unit_price: float
     discount_type_snapshot: str = "none"
     discount_value_snapshot: float = 0.0
+
 
 class OrderDetailCreate(OrderDetailBase):
     sku_code_snapshot: str
@@ -18,6 +22,7 @@ class OrderDetailCreate(OrderDetailBase):
     discounted_price: float
     line_total: float
 
+
 class OrderDetailResponse(OrderDetailCreate):
     order_detail_id: int
     created_at: datetime
@@ -26,24 +31,30 @@ class OrderDetailResponse(OrderDetailCreate):
     class Config:
         from_attributes = True
 
+
 class OrderBase(BaseModel):
     customer_id: Optional[int] = None
     receiver_name: str
     receiver_phone: str
     shipping_address: str
+    shipping_method: Optional[ShippingMethod] = ShippingMethod.standard
     note: Optional[str] = None
     payment_method: str
     voucher_id: Optional[int] = None
 
+
 class OrderCreate(OrderBase):
     voucher_code: Optional[str] = None
 
+
 class OrderStatusUpdate(BaseModel):
-    status: str
+    status: OrderStatus
     note: Optional[str] = None
+
 
 class OrderCancel(BaseModel):
     reason: str
+
 
 class OrderResponse(OrderBase):
     order_id: int

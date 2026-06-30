@@ -45,7 +45,7 @@ class CartRepository(BaseRepository[Cart]):
         cart = result.scalars().first()
 
         if not cart:
-            cart = Cart(customer_id=customer_id, session_id=session_id)
+            cart = Cart(user_id=user_id, customer_id=customer_id, session_id=session_id)
             self.db.add(cart)
             await self.db.flush()
         return cart

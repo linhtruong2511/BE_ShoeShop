@@ -106,7 +106,7 @@ class ProductService:
             )
 
         total_pages = (total + limit - 1) // limit if limit > 0 else 1
-        return products, total, total_pages
+        return result_data, total, total_pages
 
     async def search_all_products(
         self,

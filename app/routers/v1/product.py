@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from app.core.enums import GenderTarget
 from app.repositories.product_repository import ProductRepository
 from app.schemas.product import (
     ProductListResponse,
@@ -24,7 +25,7 @@ async def get_products(
     max_price: Optional[int] = Query(None),
     in_stock: Optional[bool] = Query(None),
     on_sale: Optional[bool] = Query(None),
-    gender_target: Optional[str] = Query(None),
+    gender_target: Optional[GenderTarget] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     sort_by: str = Query("created_at"),

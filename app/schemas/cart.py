@@ -2,12 +2,15 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
+
 class CartItemBase(BaseModel):
     sku_id: int
     quantity: int
 
+
 class CartItemCreate(CartItemBase):
     pass
+
 
 class CartItemResponse(CartItemBase):
     cart_item_id: int
@@ -30,24 +33,26 @@ class CartItemResponse(CartItemBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-
     class Config:
         from_attributes = True
 
 
 class CartBase(BaseModel):
     customer_id: Optional[int] = None
+    user_id: Optional[int] = None
     session_id: Optional[str] = None
     status: str = "active"
+
 
 class CartSummaryResponse(BaseModel):
     subtotal: float
     item_count: int
 
+
 class CartResponse(CartBase):
     cart_id: int
     items: List[CartItemResponse] = []
-    summary: CartSummaryResponse
+    summary: Optional[CartSummaryResponse] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

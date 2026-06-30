@@ -2,6 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db, get_current_user_optional
+from app.models.user import User
 from app.schemas.cart import CartResponse, CartItemCreate
 from app.models.customer import Customer
 from app.schemas.base import BaseResponse
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/cart", tags=["carts"])
 async def get_cart(
     x_session_id: str = Header(None),
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[Customer] = Depends(get_current_user_optional),
+    current_user: Optional[Customer | User] = Depends(get_current_user_optional),
 ):
     service = CartService(db)
     cart = await service.get_user_cart(current_user, x_session_id)

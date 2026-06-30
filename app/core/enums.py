@@ -1,6 +1,23 @@
 from enum import Enum
 
 
+class VoucherStatus(str, Enum):
+    active = "active"
+    paused = "paused"
+    hidden = "hidden"
+    expired = "expired"
+
+
+class BrandStatus(str, Enum):
+    active = "active"
+    hidden = "hidden"
+
+
+class ShippingMethod(str, Enum):
+    standard = "standard"
+    express = "express"
+
+
 class PaymentMethod(str, Enum):
     cod = "cod"
     bank_transfer = "bank_transfer"

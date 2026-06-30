@@ -3,19 +3,21 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
+from app.core.enums import BrandStatus
+
 
 class BrandBase(BaseModel):
+    brand_id: int
     brand_code: str
     brand_name: str
     description: Optional[str] = None
     logo_url: Optional[str] = None
-    status: str = "active"
+    status: BrandStatus = BrandStatus.active
 
 
 class BrandCreate(BaseModel):
     brand_name: str
     description: Optional[str] = None
-    file: UploadFile | None = None
 
 
 class BrandUpdate(BaseModel):
