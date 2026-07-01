@@ -62,3 +62,11 @@ class DiscountType(str, Enum):
 class BaseStatus(str, Enum):
     active = "active"
     inactive = "inactive"
+
+
+class StockLogReferenceType(str, Enum):
+    ORDER = "order"
+    MANUAL = "manual"
+    RETURN = "return"
+    IMPORT = "import"
+    EXPORT = "export"

@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, model_validator
+from typing import Optional, List, Any
 from datetime import datetime
 
 from app.core.enums import OrderStatus, ShippingMethod
@@ -21,15 +21,6 @@ class OrderDetailCreate(OrderDetailBase):
     image_url_snapshot: Optional[str] = None
     discounted_price: float
     line_total: float
-
-
-class OrderDetailResponse(OrderDetailCreate):
-    order_detail_id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
 
 
 class OrderBase(BaseModel):
@@ -54,6 +45,28 @@ class OrderStatusUpdate(BaseModel):
 
 class OrderCancel(BaseModel):
     reason: str
+
+
+class OrderStatusLogResponse(BaseModel):
+    log_id: int
+    order_id: int
+    old_status: Optional[str] = None
+    new_status: str
+    note: Optional[str] = None
+    changed_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class OrderDetailResponse(OrderDetailCreate):
+    order_detail_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    status_logs: List[OrderStatusLogResponse] = []
+
+    class Config:
+        from_attributes = True
 
 
 class OrderResponse(OrderBase):

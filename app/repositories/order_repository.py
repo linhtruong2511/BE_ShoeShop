@@ -22,7 +22,10 @@ class OrderRepository(BaseRepository[Order]):
     async def get_with_details(self, order_id: int) -> Order | None:
         result = await self.db.execute(
             select(Order)
-            .options(selectinload(Order.details))
+            .options(
+                selectinload(Order.details),
+                selectinload(Order.status_logs)
+            )
             .where(Order.order_id == order_id)
         )
         return result.scalars().first()

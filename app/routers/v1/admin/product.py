@@ -1,12 +1,17 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
+from app.core.enums import StockLogReferenceType
+from app.models.stock_log import StockLog
 from app.repositories.product_repository import ProductRepository
+from app.schemas import stock
 from app.schemas.product import (
     ProductCreate,
     ProductResponse,
+    ProductSkuUpdateStock,
     ProductUpdate,
     ProductListThreeLevelResponse,
     ProductColorCreate,
@@ -333,6 +338,13 @@ async def add_product_color_skus(
 ):
     color = await db.get(ProductColor, color_id)
     product = await db.get(Product, product_id)
+
+    if not color or color.product_id != product_id:
+        raise HTTPException(404, "Color not found")
+
+    if not product:
+        raise HTTPException(404, "Product not found")
+
     for sku_in in skus_data.skus:
         sku_data = sku_in.model_dump()
         if not sku_data.get("sku_code"):
@@ -343,6 +355,24 @@ async def add_product_color_skus(
         db.add(sku)
     await db.commit()
     return BaseResponse(data=None)
+
+
+@router.patch(
+    "/{product_id}/colors/{color_id}/skus/{sku_id}/logs", response_model=BaseResponse
+)
+async def get_sku_logs(
+    product_id: int,
+    color_id: int,
+    sku_id: int,
+    status_data: StatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    stmt = select(StockLog).where(
+        StockLog.sku_id == sku_id,
+    )
+    logs = (await db.execute(stmt)).scalars().all()
+    return BaseResponse(data=logs)
 
 
 @router.patch(
@@ -360,5 +390,76 @@ async def update_product_sku_status(
     if not sku or sku.color_id != color_id:
         raise HTTPException(404, "SKU not found")
     sku.status = status_data.status
+    await db.commit()
+    return BaseResponse(data=None)
+
+
+@router.patch(
+    "/{product_id}/colors/{color_id}/skus/{sku_id}/import", response_model=BaseResponse
+)
+async def import_product_sku(
+    product_id: int,
+    color_id: int,
+    sku_id: int,
+    data: ProductSkuUpdateStock,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    sku = await db.get(ProductSku, sku_id)
+    if not sku or sku.color_id != color_id:
+        raise HTTPException(404, "SKU not found")
+
+    old_stock = sku.stock_quantity
+    sku.stock_quantity += data.stock_quantity
+
+    stock_log = StockLog(
+        sku_id=sku.sku_id,
+        change_quantity=data.stock_quantity,
+        reason="import",
+        reason_note=data.reason,
+        stock_before=old_stock,
+        stock_after=sku.stock_quantity,
+        created_by=current_user.user_id,
+        reference_type=StockLogReferenceType.IMPORT.value,
+        reference_id=sku.sku_id,
+    )
+    db.add(stock_log)
+    await db.commit()
+    return BaseResponse(data=None)
+
+
+@router.patch(
+    "/{product_id}/colors/{color_id}/skus/{sku_id}/export", response_model=BaseResponse
+)
+async def export_product_sku(
+    product_id: int,
+    color_id: int,
+    sku_id: int,
+    data: ProductSkuUpdateStock,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    sku = await db.get(ProductSku, sku_id)
+    if not sku or sku.color_id != color_id:
+        raise HTTPException(404, "SKU not found")
+
+    old_stock = sku.stock_quantity
+    if old_stock - data.stock_quantity < 0:
+        raise HTTPException(400, "Stock quantity cannot be negative")
+
+    sku.stock_quantity -= data.stock_quantity
+
+    stock_log = StockLog(
+        sku_id=sku.sku_id,
+        change_quantity=-data.stock_quantity,
+        reason="export",
+        reason_note=data.reason,
+        stock_before=old_stock,
+        stock_after=sku.stock_quantity,
+        created_by=current_user.user_id,
+        reference_type=StockLogReferenceType.EXPORT.value,
+        reference_id=sku.sku_id,
+    )
+    db.add(stock_log)
     await db.commit()
     return BaseResponse(data=None)

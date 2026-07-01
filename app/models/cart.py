@@ -36,8 +36,13 @@ class Cart(Base, TimestampMixin):
         "CartItem", back_populates="cart", cascade="all, delete-orphan"
     )
 
+    applied_voucher_code: Mapped[Optional[str]] = mapped_column(
+        String(50), nullable=True
+    )
+
     @property
     def summary(self) -> dict:
+
         if not self.items:
             return {"subtotal": 0, "item_count": 0}
 

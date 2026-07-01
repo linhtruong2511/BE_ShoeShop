@@ -3,9 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_customer
+from app.core.enums import OrderStatus
+from app.models.order_status_log import OrderStatusLog
 from app.repositories.order_repository import OrderRepository
 from app.repositories.cart_repository import CartRepository
-from app.schemas.order import OrderCreate, OrderResponse
+from app.schemas.order import OrderCreate, OrderDetailResponse, OrderResponse
 from app.models.customer import Customer
 from app.schemas.base import PaginatedResponse, PaginationMeta, BaseResponse
 
@@ -33,7 +35,7 @@ async def get_my_orders(
     )
 
 
-@router.get("/{order_id}", response_model=BaseResponse[OrderResponse])
+@router.get("/{order_id}", response_model=BaseResponse[OrderDetailResponse])
 async def get_my_order_detail(
     order_id: int,
     db: AsyncSession = Depends(get_db),
@@ -105,8 +107,14 @@ async def cancel_my_order(
         raise HTTPException(404, "Order not found")
     if order.order_status != "pending":
         raise HTTPException(400, "Cannot cancel this order")
-    order.order_status = "cancelled"
+    order.order_status = OrderStatus.cancelled
     # Ideally revert stock and log
+    order_status_log = OrderStatusLog(
+        order_id=order_id,
+        new_status="cancelled",
+        note=f"Customer cancelled: {reason}",
+    )
+    db.add(order_status_log)
     await db.commit()
     return BaseResponse(data=None)
 

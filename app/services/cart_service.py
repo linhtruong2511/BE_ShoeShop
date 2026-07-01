@@ -118,23 +118,32 @@ class CartService:
         cart = await self.get_user_cart(current_customer, x_session_id)
         active_items = [item for item in cart.items if item.is_active]
         subtotal = sum(item.line_total for item in active_items)
-        
+
         discount_amount = 0.0
         if cart.applied_voucher_code:
             from app.models.voucher import Voucher
             from sqlalchemy import select
-            stmt = select(Voucher).where(Voucher.voucher_code == cart.applied_voucher_code)
+
+            stmt = select(Voucher).where(
+                Voucher.voucher_code == cart.applied_voucher_code
+            )
             voucher_res = await self.db.execute(stmt)
             voucher = voucher_res.scalars().first()
-            if voucher and voucher.status in ["active", "hidden"] and subtotal >= float(voucher.min_order_amount):
+            if (
+                voucher
+                and voucher.status in ["active", "hidden"]
+                and subtotal >= float(voucher.min_order_amount)
+            ):
                 if voucher.discount_type == "percent":
                     discount_amount = subtotal * (float(voucher.discount_value) / 100.0)
                     if voucher.max_discount is not None:
-                        discount_amount = min(discount_amount, float(voucher.max_discount))
+                        discount_amount = min(
+                            discount_amount, float(voucher.max_discount)
+                        )
                 else:
                     discount_amount = float(voucher.discount_value)
                 discount_amount = min(discount_amount, subtotal)
-                
+
         return {
             "subtotal": subtotal,
             "discount": discount_amount,
