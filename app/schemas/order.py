@@ -63,7 +63,6 @@ class OrderDetailResponse(OrderDetailCreate):
     order_detail_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    status_logs: List[OrderStatusLogResponse] = []
 
     class Config:
         from_attributes = True
@@ -83,6 +82,7 @@ class OrderResponse(OrderBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     details: List[OrderDetailResponse] = []
+    status_logs: Optional[List[OrderStatusLogResponse]] = []
 
     class Config:
         from_attributes = True

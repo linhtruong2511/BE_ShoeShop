@@ -35,7 +35,7 @@ async def get_my_orders(
     )
 
 
-@router.get("/{order_id}", response_model=BaseResponse[OrderDetailResponse])
+@router.get("/{order_id}", response_model=BaseResponse[OrderResponse])
 async def get_my_order_detail(
     order_id: int,
     db: AsyncSession = Depends(get_db),
