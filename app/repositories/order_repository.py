@@ -43,7 +43,10 @@ class OrderRepository(BaseRepository[Order]):
 
         result = await self.db.execute(
             select(Order)
-            .options(selectinload(Order.details))
+            .options(
+                selectinload(Order.details),
+                selectinload(Order.status_logs)
+            )
             .where(Order.customer_id == customer_id)
             .order_by(Order.created_at.desc())
             .offset(skip)

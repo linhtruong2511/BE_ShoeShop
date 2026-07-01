@@ -51,7 +51,7 @@ async def get_all_orders(
 
     stmt = (
         select(Order)
-        .options(selectinload(Order.details))
+        .options(selectinload(Order.details), selectinload(Order.status_logs))
         .where(where_clause)
         .order_by(Order.created_at.desc())
         .offset(skip)
@@ -118,6 +118,9 @@ async def admin_cancel_order(
     order = await repo.get_by_id(order_id)
     if not order:
         raise HTTPException(404, "Order not found")
+
+    if order.order_status != "pending":
+        raise HTTPException(400, "Cannot cancel this order")
 
     order.order_status = OrderStatus.cancelled
     log = OrderStatusLog(
