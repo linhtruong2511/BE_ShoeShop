@@ -2,6 +2,9 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
+from app.core.enums import VoucherStatus
+
+
 class VoucherBase(BaseModel):
     voucher_code: str
     voucher_name: str
@@ -16,8 +19,10 @@ class VoucherBase(BaseModel):
     end_date: datetime
     status: str = "active"
 
+
 class VoucherCreate(VoucherBase):
     pass
+
 
 class VoucherUpdate(BaseModel):
     voucher_name: Optional[str] = None
@@ -32,6 +37,7 @@ class VoucherUpdate(BaseModel):
     end_date: Optional[datetime] = None
     status: Optional[str] = None
 
+
 class VoucherResponse(VoucherBase):
     voucher_id: int
     used_count: int
@@ -40,3 +46,7 @@ class VoucherResponse(VoucherBase):
 
     class Config:
         from_attributes = True
+
+
+class VoucherStatusUpdate(BaseModel):
+    status: VoucherStatus = VoucherStatus.active

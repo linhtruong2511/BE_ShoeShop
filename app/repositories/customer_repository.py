@@ -51,6 +51,15 @@ class CustomerRepository(BaseRepository[Customer]):
             await self.db.commit()
             await self.db.refresh(customer)
         return customer
+
+    async def update_customer(self, customer_id: int, update_data: dict) -> Customer | None:
+        customer = await self.get_by_id(customer_id)
+        if customer:
+            for key, value in update_data.items():
+                setattr(customer, key, value)
+            await self.db.commit()
+            await self.db.refresh(customer)
+        return customer
         
     async def get_customer_with_stats(self, customer_id: int):
         from sqlalchemy import func

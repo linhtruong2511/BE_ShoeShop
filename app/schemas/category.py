@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class CategoryBase(BaseModel):
-    category_id: int
+    category_id: Optional[int] = None
     category_code: str
     category_name: str
     parent_id: Optional[int] = None
@@ -24,7 +24,6 @@ class CategoryUpdate(BaseModel):
 
 
 class CategoryResponse(CategoryBase):
-    category_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
 

@@ -110,9 +110,7 @@ async def get_all_brands_admin(
     current_user: User = Depends(get_current_admin),
 ):
     repo = BrandRepository(db)
-    items, total = await repo.get_all_brands(
-        skip=skip, limit=limit, status=None
-    )
+    items, total = await repo.get_all_brands(skip=skip, limit=limit, status=None)
     page = (skip // limit) + 1 if limit > 0 else 1
     total_pages = (total + limit - 1) // limit if limit > 0 else 1
     return PaginatedResponse(

@@ -70,3 +70,13 @@ class StockLogReferenceType(str, Enum):
     RETURN = "return"
     IMPORT = "import"
     EXPORT = "export"
+
+
+class UserStatus(str, Enum):
+    active = "active"
+    inactive = "locked"
+
+
+class CustomerStatus(str, Enum):
+    active = "active"
+    inactive = "locked"

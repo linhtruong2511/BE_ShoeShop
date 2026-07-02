@@ -14,19 +14,39 @@ async def get_sales_summary(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_admin)
 ):
+    from app.models.order_detail import OrderDetail
+    from app.models.product_sku import ProductSku
+
     # Total revenue
     revenue_stmt = select(func.sum(Order.total_amount)).where(Order.payment_status == "paid", Order.order_status == "completed")
     revenue_res = await db.execute(revenue_stmt)
     total_revenue = revenue_res.scalar() or 0
 
     # Total orders
-    orders_stmt = select(func.count(Order.order_id))
+    orders_stmt = select(func.count(Order.order_id)).where(Order.order_status == "completed")
     orders_res = await db.execute(orders_stmt)
     total_orders = orders_res.scalar() or 0
 
+    # Total items sold
+    items_sold_stmt = (
+        select(func.sum(OrderDetail.quantity))
+        .select_from(OrderDetail)
+        .join(Order, Order.order_id == OrderDetail.order_id)
+        .where(Order.order_status == "completed")
+    )
+    items_sold_res = await db.execute(items_sold_stmt)
+    total_items_sold = items_sold_res.scalar() or 0
+
+    # Total low stock
+    low_stock_stmt = select(func.count(ProductSku.sku_id)).where(ProductSku.stock_quantity <= 5)
+    low_stock_res = await db.execute(low_stock_stmt)
+    total_low_stock = low_stock_res.scalar() or 0
+
     return BaseResponse(data={
         "total_revenue": float(total_revenue),
-        "total_orders": total_orders
+        "total_orders": total_orders,
+        "total_items_sold": int(total_items_sold),
+        "total_low_stock": total_low_stock
     })
 
 @router.get("/inventory", response_model=BaseResponse)
@@ -47,6 +67,7 @@ async def get_inventory_report(
             ProductSku.sku_code,
             ProductSku.stock_quantity
         )
+        .select_from(ProductSku)
         .join(ProductColor, ProductColor.color_id == ProductSku.color_id)
         .join(Product, Product.product_id == ProductColor.product_id)
         .where(ProductSku.stock_quantity <= low_stock_threshold)
@@ -86,7 +107,8 @@ async def get_best_sellers_report(
             func.sum(OrderDetail.quantity).label("sold"),
             ProductColor.price
         )
-        .join(OrderDetail, OrderDetail.sku_id == ProductSku.sku_id)
+        .select_from(OrderDetail)
+        .join(ProductSku, ProductSku.sku_id == OrderDetail.sku_id)
         .join(Order, Order.order_id == OrderDetail.order_id)
         .join(ProductColor, ProductColor.color_id == ProductSku.color_id)
         .join(Product, Product.product_id == ProductColor.product_id)
@@ -126,15 +148,16 @@ async def get_vouchers_report(
 
     stmt = (
         select(
-            Voucher.code,
-            Voucher.voucher_type,
+            Voucher.voucher_code.label("code"),
+            Voucher.discount_type.label("type"),
             func.count(VoucherUsage.usage_id).label("used"),
             func.sum(Order.voucher_discount_amount).label("discount"),
             func.sum(Order.total_amount).label("sales")
         )
-        .join(VoucherUsage, VoucherUsage.voucher_id == Voucher.voucher_id)
-        .join(Order, Order.order_id == VoucherUsage.order_id)
-        .group_by(Voucher.code, Voucher.voucher_type)
+        .select_from(Voucher)
+        .outerjoin(VoucherUsage, VoucherUsage.voucher_id == Voucher.voucher_id)
+        .outerjoin(Order, Order.order_id == VoucherUsage.order_id)
+        .group_by(Voucher.voucher_code, Voucher.discount_type)
         .order_by(func.count(VoucherUsage.usage_id).desc())
     )
     result = await db.execute(stmt)

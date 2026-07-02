@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
+from app.core.enums import UserStatus
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import (
     UserAdminCreate,
     UserAdminUpdate,
     UserAdminListResponse,
     UserAdminDetailResponse,
+    UserStatusUpdate,
 )
 from app.models.user import User
 from app.schemas.base import (
@@ -102,12 +104,12 @@ async def update_user(
 @router.patch("/{user_id}/status", response_model=BaseResponse[UserAdminDetailResponse])
 async def update_user_status(
     user_id: int,
-    status_update: StatusUpdate,
+    status_update: UserStatusUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_admin),
 ):
     repo = UserRepository(db)
-    user = await repo.update_status(user_id, status_update.status)
+    user = await repo.update_status(user_id, status_update.status.value)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 

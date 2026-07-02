@@ -3,8 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import AsyncSessionLocal
 from app.core.dependencies import get_db, get_current_admin
+from app.core.enums import VoucherStatus
 from app.repositories.voucher_repository import VoucherRepository
-from app.schemas.voucher import VoucherCreate, VoucherResponse, VoucherUpdate
+from app.schemas.voucher import (
+    VoucherCreate,
+    VoucherResponse,
+    VoucherStatusUpdate,
+    VoucherUpdate,
+)
 from app.models.user import User
 from app.schemas.base import (
     PaginatedResponse,
@@ -74,7 +80,7 @@ async def update_voucher(
 @router.patch("/{voucher_id}/status", response_model=BaseResponse)
 async def update_voucher_status(
     voucher_id: int,
-    status_data: StatusUpdate,
+    status_data: VoucherStatusUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_admin),
 ):

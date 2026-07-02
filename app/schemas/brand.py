@@ -7,7 +7,6 @@ from app.core.enums import BrandStatus
 
 
 class BrandBase(BaseModel):
-    brand_id: int
     brand_code: str
     brand_name: str
     description: Optional[str] = None
@@ -16,6 +15,8 @@ class BrandBase(BaseModel):
 
 
 class BrandCreate(BaseModel):
+    brand_id: Optional[int] = None
+    brand_code: Optional[str] = None
     brand_name: str
     description: Optional[str] = None
 
