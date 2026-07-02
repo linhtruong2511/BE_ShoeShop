@@ -128,6 +128,9 @@ class OrderRepository(BaseRepository[Order]):
             )
             self.db.add(detail)
 
+            if sku.stock_quantity < quantity:
+                raise ValueError(f"Số lượng đặt hàng ({quantity}) vượt quá số lượng trong kho ({sku.stock_quantity}) cho sản phẩm {product.product_name if product else sku.sku_code} (Size {sku.size})")
+
             # Reduce stock
             sku.stock_quantity -= quantity
             self.db.add(sku)
